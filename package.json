@@ -4,7 +4,7 @@
   "nodejs": true,
   "window": {
     "title": "iPay",
-    "toolbar": false,
+    "toolbar": true,
     "width": 910,
     "height": 610,
     "resizable": true,

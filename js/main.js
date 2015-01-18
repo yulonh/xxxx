@@ -1,5 +1,6 @@
 var gui = require('nw.gui');
 var win = gui.Window;
+var tesseract = require('./Tesseract-OCR/tesseract.js');
 
 ~ function(win) {
   var accounts = null;
@@ -31,6 +32,7 @@ var win = gui.Window;
           account = accounts[aIndex],
           aLength = accounts.length,
           tLength = 0;
+        var img = doc.getElementById('imgCode');
 
         function testNext() {
           if (aIndex === aLength) {
@@ -51,9 +53,46 @@ var win = gui.Window;
             nextBtn.trigger('click');
           }, 100);
 
+          console.log('testing ', aIndex, '/', aLength, account, type.next().text());
           tIndex++;
+        }
 
-          console.log('testing ', account, type.next().text());
+        function image2base64(img) {
+          var canvas = doc.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          return canvas.toDataURL();
+        }
+
+        function getRandCode() {
+          var base64 = image2base64(img);
+          tesseract.getTextFromBase64(base64, function() {
+            Zepto.get('./out.txt', function(res) {
+              res = res.replace(/[^\d]/g, '');
+              if (res.length !== 4) {
+                img.src = '/ImageCodeNew?date=' + new Date().getTime();
+                return;
+              }
+              $('#rand').val(res);
+              $('#btnProdOk').trigger('click');
+            });
+          });
+        }
+
+        if (href.indexOf('http://pay.tianxiafu.cn/435_km_0.html') !== -1) {
+          img.onload = getRandCode;
+          getRandCode();
+
+          $(doc).on('ajaxComplete', function(e, xhr, opt) {
+            if (opt.url.indexOf('RandValidateAction') !== -1) {
+              var res = JSON.parse(xhr.responseText);
+              if (res == 0) {
+                img.src = '/ImageCodeNew?date=' + new Date().getTime();
+              }
+            }
+          });
         }
 
         if (href.indexOf('http://pay.tianxiafu.cn//Step2Action') !== -1) {
@@ -63,6 +102,8 @@ var win = gui.Window;
               var res = JSON.parse(xhr.responseText);
               if (0 === res.resultTag) {
                 testNext();
+              } else {
+                tIndex = 0;
               }
             }
           });
@@ -77,6 +118,8 @@ var win = gui.Window;
         }
 
         if (href.indexOf('/Step3Action') !== -1) {
+          console.log('Step3Action', aIndex, aLength);
+          aIndex++;
           if (aIndex < aLength) {
             this.openIndexWindow();
           } else {
