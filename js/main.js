@@ -35,15 +35,16 @@ var tesseract = require('./Tesseract-OCR/tesseract.js');
         var img = doc.getElementById('imgCode');
 
         function testNext() {
-          if (aIndex === aLength) {
-            console.log('all test complete');
-            return;
-          }
-
           if (tIndex >= tLength) {
             tIndex = 0;
             aIndex++;
             account = accounts[aIndex];
+          }
+
+          if (aIndex === aLength) {
+            console.log('all test complete');
+            alert('全部任务已完成');
+            return;
           }
 
           var type = types.eq(tIndex);
@@ -75,6 +76,7 @@ var tesseract = require('./Tesseract-OCR/tesseract.js');
                 img.src = '/ImageCodeNew?date=' + new Date().getTime();
                 return;
               }
+              $('#435005').trigger('click');
               $('#rand').val(res);
               $('#btnProdOk').trigger('click');
             });
@@ -98,6 +100,7 @@ var tesseract = require('./Tesseract-OCR/tesseract.js');
         if (href.indexOf('http://pay.tianxiafu.cn//Step2Action') !== -1) {
           //
           $(doc).on('ajaxComplete', function(e, xhr, opt) {
+            //提交结果判定
             if (opt.url === 'SubmitAction') {
               var res = JSON.parse(xhr.responseText);
               if (0 === res.resultTag) {
@@ -106,15 +109,17 @@ var tesseract = require('./Tesseract-OCR/tesseract.js');
                 tIndex = 0;
               }
             }
+
+            //页面加载完毕
+            if (opt.url.indexOf('FeeModelAction?modelId=') !== -1) {
+              phoneNode = $('#con3phone1');
+              nextBtn = $('#ydsjbtnCon3FormSubmit');
+              types = $('#ydsj_yzm_cashTab :radio');
+              tLength = types.length;
+              testNext();
+            }
+
           });
-          //
-          setTimeout(function() {
-            phoneNode = $('#con3phone1');
-            nextBtn = $('#ydsjbtnCon3FormSubmit');
-            types = $('#ydsj_yzm_cashTab :radio');
-            tLength = types.length;
-            testNext();
-          }, 1000);
         }
 
         if (href.indexOf('/Step3Action') !== -1) {
@@ -132,6 +137,8 @@ var tesseract = require('./Tesseract-OCR/tesseract.js');
       accounts = $('#accounts').val().trim();
       if (accounts) {
         accounts = accounts.trim().split(/[^\d]+/);
+        aIndex = 0;
+        tIndex = 0;
         console.log('accounts :', accounts);
       } else {
         alert('必须先输入账号!');
